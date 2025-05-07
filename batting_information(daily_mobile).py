@@ -45,7 +45,7 @@ df = load_data_from_drive()
 batter_ID = load_batter_id()
 pitcher_ID = load_pitcher_id()
 
-df = pd.merge(df, pitcher_ID, on='pitcher', how='left')
+df = pd.merge(df, batter_ID, on='batter', how='left')
 
 if df.empty:
     st.error("❌ 데이터셋이 비어있습니다. Google Drive 파일 ID나 파일 내용을 확인하세요.")
@@ -162,7 +162,7 @@ st.header(f"{batter_name} - {selected_date.strftime('%Y-%m-%d')} vs {opponent_te
 st.subheader("Pitch Details")
 
 filtered_df = filtered_df.rename(columns={
-    'pitcher_name':'Pitcher','pitch_name': 'Type','release_speed': 'Velo(km/h)',
+    'player_name':'Pitcher','pitch_name': 'Type','release_speed': 'Velo(km/h)',
     'release_spin_rate': 'Spin(rpm)','pitch_number': 'No', 'outs_when_up': 'Out',
     'balls': 'B', 'strikes': 'S', 'description': 'Desc'
 })
