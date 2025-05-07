@@ -167,7 +167,7 @@ filtered_df = filtered_df.rename(columns={
     'balls': 'B', 'strikes': 'S', 'description': 'Desc'
 })
 
-st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'No', 'Out', 'B', 'S', 'Desc','result']], hide_index=True)
+st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'No', 'Out', 'B', 'S', 'Desc']], hide_index=True)
 
 # -----------------------------
 # Description 필터 (Plotly용)
