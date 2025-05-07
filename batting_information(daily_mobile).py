@@ -101,10 +101,8 @@ filtered_player_df['opponent_team'] = filtered_player_df.apply(
     lambda row: row['away_team'] if row['home_team'] == selected_team else row['home_team'], axis=1
 )
 
-# 날짜 + 상대팀 문자열 생성 (예: 2025-04-15 NYM)
-# 날짜가 datetime 형식이 아니라면 변환
-filtered_player_df.index = pd.to_datetime(filtered_player_df.index, errors='coerce')
-filtered_player_df['date_str'] = filtered_player_df.index.to_series().dt.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
+# 'game_date' 열을 이용해 날짜 + 상대팀 문자열 생성 (예: 2025-04-15 NYM)
+filtered_player_df['date_str'] = pd.to_datetime(filtered_player_df['game_date']).dt.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
 
 # 중복 제거 및 정렬
 date_options = ['— Select Date —'] + sorted(filtered_player_df['date_str'].unique())
@@ -117,12 +115,13 @@ if selected_date_str == '— Select Date —':
 # 선택된 문자열에서 날짜만 추출
 selected_date = pd.to_datetime(selected_date_str.split(' ')[0])
 
-# 날짜별 데이터 필터링
-filtered_df = filtered_player_df[filtered_player_df.index.normalize() == pd.Timestamp(selected_date)]
+# 선택한 날짜로 데이터 필터링 (game_date 기준)
+filtered_df = filtered_player_df[pd.to_datetime(filtered_player_df['game_date']) == selected_date]
 
 if filtered_df.empty:
-    st.warning(f"⚠️ {selected_player}의 {selected_date} 날짜 데이터가 없습니다.")
+    st.warning(f"⚠️ {selected_player}의 {selected_date.strftime('%Y-%m-%d')} 날짜 데이터가 없습니다.")
     st.stop()
+
 
 # batter_id 추출 및 Statcast 데이터 불러오기
 batter_id = filtered_df['batter'].iloc[0]
