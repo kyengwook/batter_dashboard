@@ -3,13 +3,14 @@ import plotly.graph_objects as go
 import streamlit as st
 import requests
 import io
-from pybaseball import statcast_pitcher, statcast_batter
+from pybaseball import statcast_batter
 
-st.set_page_config(layout="wide")
+# ---- Streamlit config ----
+st.set_page_config(page_title="MLB 2025 Daily Batting Info", layout="wide")
 
-# 데이터 로드 함수
+# ---- 데이터 로드 함수 ----
 @st.cache_data
-def load_data_from_drive():
+def load_game_data():
     file_id = "1sWJCEA7MUrOCGfj61ES1JQHJGBfYVYN3"
     download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
     response = requests.get(download_url)
@@ -21,19 +22,14 @@ def load_data_from_drive():
     return df
 
 @st.cache_data
-def load_batter_id():
+def load_id_data():
     batter_ID = pd.read_excel('Batter_ID(2025).xlsx')
-    return batter_ID
-
-@st.cache_data
-def load_pitcher_id():
     pitcher_ID = pd.read_excel('Pitcher_ID(2025).xlsx')
-    return pitcher_ID
+    return batter_ID, pitcher_ID
 
-# 데이터 불러오기
-df = load_data_from_drive()
-batter_ID = load_batter_id()
-pitcher_ID = load_pitcher_id()  # 누락됨 — 꼭 추가!
+# ---- 데이터 불러오기 ----
+df = load_game_data()
+batter_ID, pitcher_ID = load_id_data()
 
 df = pd.merge(df, batter_ID, on='batter', how='left')
 
@@ -41,207 +37,132 @@ if df.empty:
     st.error("❌ 데이터셋이 비어있습니다. Google Drive 파일 ID나 파일 내용을 확인하세요.")
     st.stop()
 
+# ---- 페이지 타이틀 ----
 st.title("⚾ MLB 2025 - Daily Batting Info")
 st.caption("🧑🏻‍💻 Kyengwook | 📬 kyengwook8@naver.com | [GitHub](https://github.com/kyengwook/kyengwook) | [Instagram](https://instagram.com/kyengwook)")
 st.caption("📊 Data: [Baseball Savant](https://baseballsavant.mlb.com/) – MLB 2025 Regular Season")
 
-# Division 선택
+# ---- Division/Team 선택 ----
 divisions = {
     'NL East': ['PHI', 'NYM', 'MIA', 'WSH', 'ATL'],
     'NL Central': ['CHC', 'MIL', 'STL', 'CIN', 'PIT'],
-    'NL West': ['LAD', 'SD', 'SF', 'AZ', 'COL'],
+    'NL West': ['LAD', 'SD', 'SF', 'ARI', 'COL'],
     'AL East': ['NYY', 'BOS', 'TOR', 'TB', 'BAL'],
     'AL Central': ['DET', 'KC', 'CLE', 'MIN', 'CWS'],
-    'AL West': ['TEX', 'LAA', 'HOU', 'ATH', 'SEA']
+    'AL West': ['TEX', 'LAA', 'HOU', 'OAK', 'SEA']
 }
 
-div_options = ['— Select Division —'] + list(divisions.keys())
-selected_division = st.selectbox('Division', div_options, label_visibility='collapsed')
+div_choice = st.selectbox('Select Division', list(divisions.keys()))
+team_choice = st.selectbox('Select Team', divisions[div_choice])
 
-if selected_division == '— Select Division —':
-    st.info('ℹ️ Division을 먼저 선택해주세요.')
-    st.stop()
-
-# 팀 선택
-selected_teams = divisions[selected_division]
-team_options = ['— Select Team —'] + selected_teams
-selected_team = st.selectbox('Team', team_options, label_visibility='collapsed')
-
-if selected_team == '— Select Team —':
-    st.info('ℹ️ 팀을 먼저 선택해주세요.')
-    st.stop()
-
-# 팀 소속 선수 필터링
+# ---- 팀 소속 선수 필터 ----
 team_df = df[
-    ((df['home_team'] == selected_team) & (df['inning_topbot'] == 'Bot')) |
-    ((df['away_team'] == selected_team) & (df['inning_topbot'] == 'Tot'))
+    ((df['home_team'] == team_choice) & (df['inning_topbot'] == 'Bot')) |
+    ((df['away_team'] == team_choice) & (df['inning_topbot'] == 'Top'))
 ]
 
 if team_df.empty:
-    st.warning(f"⚠️ {selected_team} 팀 데이터가 없습니다.")
+    st.warning(f"⚠️ {team_choice} 팀 데이터가 없습니다.")
     st.stop()
 
-# 선수 선택
-player_options = team_df['batter_name'].dropna().unique()
-player_options = ['— Select Batter —'] + sorted(player_options)
-selected_player = st.selectbox('Batter', player_options, label_visibility='collapsed')
+player_list = sorted(team_df['batter_name'].dropna().unique())
+player_choice = st.selectbox('Select Batter', player_list)
 
-if selected_player == '— Select Batter —':
-    st.info('ℹ️ 선수를 선택해주세요.')
-    st.stop()
+player_df = team_df[team_df['batter_name'] == player_choice]
 
-filtered_player_df = team_df[team_df['batter_name'] == selected_player]
-
-if filtered_player_df.empty:
-    st.warning(f"⚠️ {selected_player} 선수 데이터가 없습니다.")
-    st.stop()
-
-# 날짜 선택
-# 상대팀 정보 추가
-filtered_player_df['opponent_team'] = filtered_player_df.apply(
-    lambda row: row['home_team'] if row['away_team'] == selected_team else row['away_team'], axis=1
+# ---- 날짜 선택 ----
+player_df['opponent_team'] = player_df.apply(
+    lambda row: row['away_team'] if row['home_team'] == team_choice else row['home_team'], axis=1
 )
+player_df['date_str'] = player_df.index.to_series().dt.strftime('%Y-%m-%d') + ' vs ' + player_df['opponent_team']
+date_choice = st.selectbox('Select Date', sorted(player_df['date_str'].unique()))
 
-# 날짜 + 상대팀 문자열 생성 (예: 2025-04-15 NYM)
-filtered_player_df['date_str'] = filtered_player_df.index.to_series().dt.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
+selected_date = pd.to_datetime(date_choice.split(' vs ')[0])
+opponent_team = date_choice.split(' vs ')[1]
 
-
-# 중복 제거 및 정렬
-date_options = ['— Select Date —'] + sorted(filtered_player_df['date_str'].unique())
-selected_date_str = st.selectbox('Date', date_options, label_visibility='collapsed')
-
-if selected_date_str == '— Select Date —':
-    st.info('ℹ️ 날짜를 선택해주세요.')
+daily_df = player_df[player_df.index.normalize() == selected_date]
+if daily_df.empty:
+    st.warning(f"⚠️ {player_choice} 선수의 {selected_date.date()} 경기 데이터가 없습니다.")
     st.stop()
 
-# 선택된 문자열에서 날짜만 추출
-selected_date = pd.to_datetime(selected_date_str.split(' ')[0])
-
-if selected_date == '— Select Date —':
-    st.info('ℹ️ 날짜를 선택해주세요.')
-    st.stop()
-
-# 날짜별 데이터 필터링
-filtered_df = filtered_player_df[filtered_player_df.index.normalize() == pd.Timestamp(selected_date)]
-
-if filtered_df.empty:
-    st.warning(f"⚠️ {selected_player}의 {selected_date} 날짜 데이터가 없습니다.")
-    st.stop()
-
-# batter_id 추출 및 Statcast 데이터 불러오기
-batter_id = filtered_df['batter'].iloc[0]
+# ---- Statcast 데이터 ----
+batter_id = daily_df['batter'].iloc[0]
 statcast_df = statcast_batter(selected_date.strftime('%Y-%m-%d'), selected_date.strftime('%Y-%m-%d'), batter_id)
 
-# 단위 변환 + Batter ID 병합
+if statcast_df.empty:
+    st.warning(f"⚠️ Statcast 데이터가 없습니다 ({selected_date.date()})")
+    st.stop()
+
 statcast_df['release_speed'] = round(statcast_df['release_speed'] * 1.60934, 1)
 statcast_df['launch_speed'] = round(statcast_df['launch_speed'] * 1.60934, 1)
 statcast_df = pd.merge(statcast_df, pitcher_ID, on='pitcher', how='left')
 
-batter_name = statcast_df['player_name'].iloc[0]
-
-# ---- UI 구분선 ----
-opponent_team = selected_date_str.split(' ')[1]
-st.header(f"{batter_name} - {selected_date.strftime('%Y-%m-%d')} vs {opponent_team}")
-
+# ---- Header ----
+st.header(f"{player_choice} - {selected_date.date()} vs {opponent_team}")
 
 # ---- Pitch Details ----
 st.subheader("Pitch Details")
-
-filtered_df = filtered_df.rename(columns={
+pitch_df = daily_df.rename(columns={
     'pitch_number': 'No', 'pitch_name': 'Type', 'outs_when_up': 'Out',
     'balls': 'B', 'strikes': 'S', 'release_speed': 'Velo(km/h)',
     'release_spin_rate': 'Spin(rpm)', 'type': 'Result', 'description': 'Desc'
 })
+st.dataframe(pitch_df[['No', 'Type', 'Out', 'B', 'S', 'Velo(km/h)', 'Spin(rpm)', 'Result', 'Desc']], hide_index=True)
 
-st.dataframe(filtered_df[['No', 'Type', 'Out', 'B', 'S', 'Velo(km/h)', 'Spin(rpm)', 'Result', 'Desc']], hide_index=True)
+# ---- Batting info ----
+st.subheader("Batting Info")
+desc_list = ['— Select Description —'] + sorted(statcast_df['description'].dropna().unique())
+desc_choice = st.selectbox('Select Description', desc_list)
 
+if desc_choice != '— Select Description —':
+    desc_df = statcast_df[statcast_df['description'] == desc_choice]
+    st.dataframe(desc_df)
 
-## 단위 변환
-#for col in ['RelZ(cm)', 'RelX(cm)', 'Ext(cm)', 'VB(cm)', 'HB(cm)']:
-    #if 'X' in col or 'HB' in col:
-        #summary_df[col] = (summary_df[col] * 30.48 * -1).round(1)
-    #else:
-        #summary_df[col] = (summary_df[col] * 30.48).round(1)
+# ---- Plotly Visualization ----
+st.subheader("Pitch Location (Strike Zone)")
 
-# --- Batting info ---
-st.subheader("Batting info")
-
-description_options = statcast_df['description'].dropna().unique()
-description_options = ['— Select Description —'] + sorted(description_options)
-
-selected_description = st.selectbox('Description', description_options, label_visibility='collapsed')
-
-if selected_description == '— Select Description —':
-    st.info('ℹ️ description 값을 선택해주세요.')
-else:
-    filtered_df = statcast_df[statcast_df['description'] == selected_description]
-    st.dataframe(filtered_df)
-
-
-# ---- Plotly 시각화 ----
 L, R = -0.708333, 0.708333
 Bot, Top = 1.5, 3.5
 
-scatter_fig = go.Figure()
+fig = go.Figure()
 pitch_styles = {
-    '4-Seam Fastball': {'color': '#D22D49'},
-    'Sinker': {'color': '#FE9D00'},
-    'Cutter': {'color': '#933F2C'},
-    'Knuckle Curve': {'color': 'mediumpurple'},
-    'Sweeper': {'color': 'olive'},
-    'Split-Finger': {'color': '#888888'},
-    'Changeup': {'color': '#1DBE3A'},
-    'Screwball': {'color': '#1DBE3A'},
-    'Forkball': {'color': '#888888'},
-    'Slurve': {'color': 'teal'},
-    'Knuckleball': {'color': 'lightsteelblue'},
-    'Slider': {'color': 'darkkhaki'},
-    'Curveball': {'color': 'teal'},
-    'Eephus': {'color': 'black'},
-    'Other': {'color': 'black'}
+    '4-Seam Fastball': '#D22D49', 'Sinker': '#FE9D00', 'Cutter': '#933F2C',
+    'Knuckle Curve': 'mediumpurple', 'Sweeper': 'olive', 'Split-Finger': '#888888',
+    'Changeup': '#1DBE3A', 'Screwball': '#1DBE3A', 'Forkball': '#888888',
+    'Slurve': 'teal', 'Knuckleball': 'lightsteelblue', 'Slider': 'darkkhaki',
+    'Curveball': 'teal', 'Eephus': 'black', 'Other': 'black'
 }
 
-for pitch_name, style in pitch_styles.items():
-    pitch_data = filtered_df[filtered_df['pitch_name'] == pitch_name]
-    if pitch_data.empty:
+for pitch, color in pitch_styles.items():
+    pdata = statcast_df[statcast_df['pitch_name'] == pitch]
+    if pdata.empty:
         continue
-    pitch_data = pitch_data.copy()
-    pitch_data['custom_hover'] = pitch_data.apply(
+    hover = pdata.apply(
         lambda row: f"{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}<br>{row['events']}<br>xBA {row['estimated_ba_using_speedangle']}" 
-        if row['description'] == 'hit_into_play' 
-        else f"{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}",
+        if row['description'] == 'hit_into_play' else
+        f"{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}",
         axis=1
     )
-    scatter_fig.add_trace(
-        go.Scatter(
-            x=pitch_data['plate_x'], y=pitch_data['plate_z'],
-            mode='markers+text', marker=dict(size=13, color=style['color']),
-            text=pitch_data['pitch_number'], textposition='top center',
-            hovertemplate="%{customdata}<extra></extra>", customdata=pitch_data['custom_hover'], name=pitch_name
-        )
-    )
+    fig.add_trace(go.Scatter(
+        x=pdata['plate_x'], y=pdata['plate_z'],
+        mode='markers',
+        marker=dict(size=12, color=color),
+        text=pdata['pitch_number'], textposition='top center',
+        hovertext=hover, name=pitch
+    ))
 
 # 스트라이크존 추가
-scatter_fig.add_shape(type='rect', x0=L, x1=R, y0=Bot, y1=Top, line=dict(color='grey', width=1.5))
-scatter_fig.add_shape(type='path', 
-    path=f'M {R-0.1},{0} L {L+0.1},{0} L {L-0.1},{-0.6} L 0,{-1.0} L {R+0.1},{-0.6} Z',
-    line=dict(color='grey', width=1.5))
+fig.add_shape(type='rect', x0=L, x1=R, y0=Bot, y1=Top, line=dict(color='grey', width=1.5))
 
-scatter_fig.update_layout(
-    title=f'{pitcher_name} vs {selected_batter} (Inning {selected_inning})',
+fig.update_layout(
+    width=550, height=600, showlegend=True,
+    title=f"{player_choice} - Pitch Locations ({selected_date.date()})",
+    margin=dict(l=5, r=5, t=80, b=5), autosize=True,
+    legend=dict(x=0.02, y=0.98, bgcolor='rgba(255,255,255,0.7)', bordercolor='black', borderwidth=1),
+    dragmode=False,
     xaxis=dict(range=[L-2.5, R+2.5], showticklabels=False, fixedrange=True),
     yaxis=dict(range=[Bot-3, Top+2], showticklabels=False, fixedrange=True),
-    width=550, height=600, showlegend=True,
-    margin=dict(l=5, r=5, t=80, b=5), autosize=True,
-    legend=dict(
-        x=0.02,
-        y=0.98,
-        bgcolor='rgba(255,255,255,0.7)',
-        bordercolor='black',
-        borderwidth=1,
-    ),
-    dragmode=False  # 이 줄을 추가하여 zoom 비활성화
 )
 
-st.plotly_chart(scatter_fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
