@@ -72,7 +72,7 @@ if selected_team == '— Select Team —':
 
 # 팀 소속 선수 필터링
 team_df = df[
-    ((df['home_team'] == selected_team) & (df['inning_topbot'] == 'Bop')) |
+    ((df['home_team'] == selected_team) & (df['inning_topbot'] == 'Bot')) |
     ((df['away_team'] == selected_team) & (df['inning_topbot'] == 'Tot'))
 ]
 
