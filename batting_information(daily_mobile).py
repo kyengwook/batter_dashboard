@@ -164,15 +164,19 @@ st.subheader("Pitch Details")
 filtered_df = filtered_df.rename(columns={
     'player_name':'Pitcher','pitch_name': 'Type','release_speed': 'Velo(km/h)',
     'release_spin_rate': 'Spin(rpm)','inning': 'Inn', 'outs_when_up': 'Out',
-    'balls': 'B', 'strikes': 'S', 'description': 'Desc'
+    'balls': 'B', 'strikes': 'S', 'description': 'Desc', 'events' : 'Result', 
+    'launch_speed' : 'Exit Speed(km/h)', 'launch_angle' : 'Launch Angle(°)', 'estimated_ba_using_speedangle' : 'xBA'
+    
 })
 
 
 # 정렬된 데이터프레임을 표시
 filtered_df = filtered_df.drop_duplicates()
 filtered_df['Velo(km/h)'] = round(filtered_df['Velo(km/h)'] * 1.60934, 1)
+filtered_df['Exit Speed(km/h)'] = round(filtered_df['Exit Speed(km/h)'] * 1.60934, 1)
 filtered_df = filtered_df.sort_values(by=['Inn', 'B', 'S'], ascending=[True, True, True])
-st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'Inn', 'Out', 'B', 'S', 'Desc']], hide_index=True)
+st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'Inn', 'Out', 'B', 'S', 'Desc',
+                         'Result', 'Exit Speed(km/h)', 'Launch Angle(°)', 'xBA']], hide_index=True)
 
 # -----------------------------
 # Description 필터 (Plotly용)
