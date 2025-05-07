@@ -162,12 +162,12 @@ st.header(f"{batter_name} - {selected_date.strftime('%Y-%m-%d')} vs {opponent_te
 st.subheader("Pitch Details")
 
 filtered_df = filtered_df.rename(columns={
-    'pitch_number': 'No', 'pitch_name': 'Type', 'outs_when_up': 'Out',
-    'balls': 'B', 'strikes': 'S', 'release_speed': 'Velo(km/h)',
-    'release_spin_rate': 'Spin(rpm)', 'type': 'Result', 'description': 'Desc'
+    'pitcher_name':'Pitcher','pitch_name': 'Type','release_speed': 'Velo(km/h)',
+    'release_spin_rate': 'Spin(rpm)','pitch_number': 'No', 'outs_when_up': 'Out',
+    'balls': 'B', 'strikes': 'S', 'description': 'Desc' ,'result'
 })
 
-st.dataframe(filtered_df[['No', 'Type', 'Out', 'B', 'S', 'Velo(km/h)', 'Spin(rpm)', 'Result', 'Desc']], hide_index=True)
+st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'No', 'Out', 'B', 'S', 'Desc','result']], hide_index=True)
 
 # -----------------------------
 # Description 필터 (Plotly용)
