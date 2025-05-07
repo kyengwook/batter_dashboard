@@ -170,7 +170,7 @@ filtered_df = filtered_df.rename(columns={
 
 # 정렬된 데이터프레임을 표시
 filtered_df = filtered_df.drop_duplicates()
-filtered_df['release_speed'] = round(filtered_df['release_speed'] * 1.60934, 1)
+filtered_df['Velo(km/h)'] = round(filtered_df['Velo(km/h)'] * 1.60934, 1)
 filtered_df = filtered_df.sort_values(by=['Inn', 'B', 'S'], ascending=[True, True, True])
 st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'Inn', 'Out', 'B', 'S', 'Desc']], hide_index=True)
 
