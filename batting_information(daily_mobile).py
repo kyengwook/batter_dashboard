@@ -98,6 +98,13 @@ if filtered_player_df.empty:
 
 # 날짜 선택
 # 상대팀 정보 추가
+# index를 datetime으로 강제 변환 (에러 방지)
+filtered_player_df.index = pd.to_datetime(filtered_player_df.index, errors='coerce')
+
+# datetime으로 변환 못 한 경우 (NaT) → 해당 행 제거 (선택적)
+filtered_player_df = filtered_player_df[filtered_player_df.index.notnull()]
+
+
 filtered_player_df['opponent_team'] = filtered_player_df.apply(
     lambda row: row['home_team'] if row['away_team'] == selected_team else row['away_team'], axis=1
 )
