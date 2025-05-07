@@ -99,7 +99,7 @@ if filtered_player_df.empty:
 # 날짜 선택
 # 상대팀 정보 추가
 filtered_player_df['opponent_team'] = filtered_player_df.apply(
-    lambda row: row['away_team'] if row['home_team'] == selected_team else row['home_team'], axis=1
+    lambda row: row['home_team'] if row['away_team'] == selected_team else row['away_team'], axis=1
 )
 
 # 날짜 + 상대팀 문자열 생성 (예: 2025-04-15 NYM)
