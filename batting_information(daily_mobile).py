@@ -172,7 +172,7 @@ st.dataframe(filtered_df[['No', 'Type', 'Out', 'B', 'S', 'Velo(km/h)', 'Spin(rpm
 # -----------------------------
 # Description 필터 (Plotly용)
 # -----------------------------
-st.subheader("Description Filter (For Plotly Only)")
+st.subheader("Location Details")
 
 description_options = statcast_df['description'].dropna().unique()
 description_options = ['— Select Description —'] + sorted(description_options)
@@ -215,16 +215,16 @@ for pitch_name, style in pitch_styles.items():
         continue
     pitch_data = pitch_data.copy()
     pitch_data['custom_hover'] = pitch_data.apply(
-        lambda row: f"{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}<br>{row['events']}<br>xBA {row['estimated_ba_using_speedangle']}" 
+        lambda row: f"{row['pitcher_name']}<br>{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}<br>{row['events']}<br>xBA {row['estimated_ba_using_speedangle']}" 
         if row['description'] == 'hit_into_play' 
-        else f"{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}",
+        else f"{row['pitcher_name']}<br>{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}",
         axis=1
     )
     scatter_fig.add_trace(
         go.Scatter(
             x=pitch_data['plate_x'], y=pitch_data['plate_z'],
-            mode='markers+text', marker=dict(size=13, color=style['color']),
-            text=pitch_data['pitch_number'], textposition='top center',
+            mode='markers', marker=dict(size=13, color=style['color']),
+
             hovertemplate="%{customdata}<extra></extra>", customdata=pitch_data['custom_hover'], name=pitch_name
         )
     )
