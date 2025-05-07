@@ -167,6 +167,9 @@ filtered_df = filtered_df.rename(columns={
     'balls': 'B', 'strikes': 'S', 'description': 'Desc'
 })
 
+
+# 정렬된 데이터프레임을 표시
+filtered_df = filtered_df.sort_values(by=['Inn', 'B', 'S'], ascending=[True, True, True])
 st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'Inn', 'Out', 'B', 'S', 'Desc']], hide_index=True)
 
 # -----------------------------
