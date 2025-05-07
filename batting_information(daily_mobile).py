@@ -219,5 +219,17 @@ for pitch_name, style in pitch_styles.items():
 scatter_fig.add_shape(type='rect', x0=L, x1=R, y0=Bot, y1=Top, line=dict(color='grey', width=1.5))
 scatter_fig.add_shape(type='path', 
     path=f'M {R-0.1},{0} L {L+0.1},{0} L {L-0.1},{-0.6} L 0,{-1.0} L {R+0.1},{-0.6} Z',
+    fillcolor='rgba(0,0,0,0)', line=dict(color='rgba(0,0,0,0)', width=1.5)
+)
+
+scatter_fig.update_layout(
+    title=f"{batter_name} - {selected_date_str}",
+    xaxis=dict(title="Pitch Location (Horizontal)", range=[L-0.5, R+0.5]),
+    yaxis=dict(title="Pitch Location (Vertical)", range=[Bot-0.5, Top+0.5]),
+    template="plotly_dark", showlegend=True, hoverlabel=dict(namelength=-1), height=650
+)
+
+st.plotly_chart(scatter_fig)
+
 
 
