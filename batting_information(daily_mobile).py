@@ -164,7 +164,7 @@ st.subheader("Pitch Details")
 filtered_df = filtered_df.rename(columns={
     'pitcher_name':'Pitcher','pitch_name': 'Type','release_speed': 'Velo(km/h)',
     'release_spin_rate': 'Spin(rpm)','pitch_number': 'No', 'outs_when_up': 'Out',
-    'balls': 'B', 'strikes': 'S', 'description': 'Desc' ,'result'
+    'balls': 'B', 'strikes': 'S', 'description': 'Desc' ,'result': 'Result'
 })
 
 st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'No', 'Out', 'B', 'S', 'Desc','result']], hide_index=True)
