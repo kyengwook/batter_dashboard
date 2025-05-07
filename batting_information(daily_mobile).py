@@ -175,7 +175,7 @@ filtered_df = filtered_df.drop_duplicates()
 filtered_df['Velo(km/h)'] = round(filtered_df['Velo(km/h)'] * 1.60934, 1)
 filtered_df['Exit Speed(km/h)'] = round(filtered_df['Exit Speed(km/h)'] * 1.60934, 1)
 filtered_df = filtered_df.sort_values(by=['Inn', 'B', 'S'], ascending=[True, True, True])
-st.dataframe(filtered_df[['Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'Inn', 'Out', 'B', 'S', 'Desc',
+st.dataframe(filtered_df[['Inn','Pitcher', 'Type', 'Velo(km/h)', 'Spin(rpm)', 'Out', 'B', 'S', 'Desc',
                          'Result', 'Exit Speed(km/h)', 'Launch Angle(°)', 'xBA']], hide_index=True)
 
 # -----------------------------
