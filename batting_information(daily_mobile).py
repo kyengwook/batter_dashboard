@@ -222,7 +222,7 @@ for pitch_name, style in pitch_styles.items():
     pitch_data['custom_hover'] = pitch_data.apply(
         lambda row: f"{row['pitcher_name']}<br>Inning {row['inning']} / Num {row['pitch_number']}<br>{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['events']}<br>xBA {row['estimated_ba_using_speedangle']}" 
         if row['description'] == 'hit_into_play' 
-        else f"{row['pitcher_name']}<br>Inning {row['inning']} / Num {row['pitch_number']}<br>{row['pitch_name']}<br>{row['release_speed']} km/h",
+        else f"{row['pitcher_name']}<br>Inning {row['inning']} / Num {row['pitch_number']}<br>{row['pitch_name']}<br>{row['release_speed']} km/h<br>{row['description']}",
         axis=1
     )
     scatter_fig.add_trace(
