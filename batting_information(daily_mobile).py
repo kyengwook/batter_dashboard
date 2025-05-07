@@ -1,3 +1,5 @@
+# batting_information(daily_mobile).py
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -7,7 +9,9 @@ from pybaseball import statcast_pitcher, statcast_batter
 
 st.set_page_config(layout="wide")
 
+# -----------------------------
 # 데이터 로드 함수
+# -----------------------------
 @st.cache_data
 def load_data_from_drive():
     file_id = "1sWJCEA7MUrOCGfj61ES1JQHJGBfYVYN3"
@@ -15,9 +19,13 @@ def load_data_from_drive():
     response = requests.get(download_url)
     response.raise_for_status()
     df = pd.read_csv(io.StringIO(response.content.decode("utf-8")), encoding='utf-8')
+    
+    # 정규시즌만 필터링
     df = df[df['game_type'] == 'R']
+    
+    # game_date 컬럼 날짜형 변환 및 정렬 (Index로 안 보냄!)
     df['game_date'] = pd.to_datetime(df['game_date'])
-    df = df.set_index('game_date').sort_index()
+    df = df.sort_values('game_date').reset_index(drop=True)
     return df
 
 @st.cache_data
@@ -30,10 +38,12 @@ def load_pitcher_id():
     pitcher_ID = pd.read_excel('Pitcher_ID(2025).xlsx')
     return pitcher_ID
 
+# -----------------------------
 # 데이터 불러오기
+# -----------------------------
 df = load_data_from_drive()
 batter_ID = load_batter_id()
-pitcher_ID = load_pitcher_id()  # 누락됨 — 꼭 추가!
+pitcher_ID = load_pitcher_id()  # 누락 방지 — 꼭 추가!
 
 df = pd.merge(df, batter_ID, on='batter', how='left')
 
@@ -41,11 +51,16 @@ if df.empty:
     st.error("❌ 데이터셋이 비어있습니다. Google Drive 파일 ID나 파일 내용을 확인하세요.")
     st.stop()
 
+# -----------------------------
+# 대시보드 UI
+# -----------------------------
 st.title("⚾ MLB 2025 - Daily Batting Info")
 st.caption("🧑🏻‍💻 Kyengwook | 📬 kyengwook8@naver.com | [GitHub](https://github.com/kyengwook/kyengwook) | [Instagram](https://instagram.com/kyengwook)")
 st.caption("📊 Data: [Baseball Savant](https://baseballsavant.mlb.com/) – MLB 2025 Regular Season")
 
+# -----------------------------
 # Division 선택
+# -----------------------------
 divisions = {
     'NL East': ['PHI', 'NYM', 'MIA', 'WSH', 'ATL'],
     'NL Central': ['CHC', 'MIL', 'STL', 'CIN', 'PIT'],
@@ -62,7 +77,9 @@ if selected_division == '— Select Division —':
     st.info('ℹ️ Division을 먼저 선택해주세요.')
     st.stop()
 
+# -----------------------------
 # 팀 선택
+# -----------------------------
 selected_teams = divisions[selected_division]
 team_options = ['— Select Team —'] + selected_teams
 selected_team = st.selectbox('Team', team_options, label_visibility='collapsed')
@@ -71,7 +88,9 @@ if selected_team == '— Select Team —':
     st.info('ℹ️ 팀을 먼저 선택해주세요.')
     st.stop()
 
+# -----------------------------
 # 팀 소속 선수 필터링
+# -----------------------------
 team_df = df[
     ((df['home_team'] == selected_team) & (df['inning_topbot'] == 'Bot')) |
     ((df['away_team'] == selected_team) & (df['inning_topbot'] == 'Top'))
@@ -81,7 +100,9 @@ if team_df.empty:
     st.warning(f"⚠️ {selected_team} 팀 데이터가 없습니다.")
     st.stop()
 
+# -----------------------------
 # 선수 선택
+# -----------------------------
 player_options = team_df['batter_name'].dropna().unique()
 player_options = ['— Select Batter —'] + sorted(player_options)
 selected_player = st.selectbox('Batter', player_options, label_visibility='collapsed')
@@ -96,13 +117,14 @@ if filtered_player_df.empty:
     st.warning(f"⚠️ {selected_player} 선수 데이터가 없습니다.")
     st.stop()
 
-# 상대팀 정보 추가
+# -----------------------------
+# 상대팀 정보 추가 및 날짜 선택
+# -----------------------------
 filtered_player_df['opponent_team'] = filtered_player_df.apply(
     lambda row: row['away_team'] if row['home_team'] == selected_team else row['home_team'], axis=1
 )
 
-# 'game_date' 열을 이용해 날짜 + 상대팀 문자열 생성 (예: 2025-04-15 NYM)
-filtered_player_df['date_str'] = pd.to_datetime(filtered_player_df['game_date']).dt.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
+filtered_player_df['date_str'] = filtered_player_df['game_date'].dt.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
 
 # 중복 제거 및 정렬
 date_options = ['— Select Date —'] + sorted(filtered_player_df['date_str'].unique())
@@ -115,8 +137,8 @@ if selected_date_str == '— Select Date —':
 # 선택된 문자열에서 날짜만 추출
 selected_date = pd.to_datetime(selected_date_str.split(' ')[0])
 
-# 선택한 날짜로 데이터 필터링 (game_date 기준)
-filtered_df = filtered_player_df[pd.to_datetime(filtered_player_df['game_date']) == selected_date]
+# 날짜별 데이터 필터링
+filtered_df = filtered_player_df[filtered_player_df['game_date'] == selected_date]
 
 if filtered_df.empty:
     st.warning(f"⚠️ {selected_player}의 {selected_date.strftime('%Y-%m-%d')} 날짜 데이터가 없습니다.")
