@@ -35,6 +35,7 @@ df = load_data_from_drive()
 batter_ID = load_batter_id()
 pitcher_ID = load_pitcher_id()  # 누락됨 — 꼭 추가!
 
+df = pd.merge(df, batter_ID, on='batter', how='left')
 
 if df.empty:
     st.error("❌ 데이터셋이 비어있습니다. Google Drive 파일 ID나 파일 내용을 확인하세요.")
@@ -134,7 +135,7 @@ statcast_df = statcast_batter(selected_date.strftime('%Y-%m-%d'), selected_date.
 # 단위 변환 + Batter ID 병합
 statcast_df['release_speed'] = round(statcast_df['release_speed'] * 1.60934, 1)
 statcast_df['launch_speed'] = round(statcast_df['launch_speed'] * 1.60934, 1)
-statcast_df = pd.merge(statcast_df, pitcher_ID, on='batter', how='left')
+statcast_df = pd.merge(statcast_df, pitcher_ID, on='pitcher', how='left')
 
 batter_name = statcast_df['player_name'].iloc[0]
 
