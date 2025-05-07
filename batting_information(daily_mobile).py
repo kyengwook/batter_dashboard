@@ -43,7 +43,7 @@ def load_pitcher_id():
 # -----------------------------
 df = load_data_from_drive()
 batter_ID = load_batter_id()
-pitcher_ID = load_pitcher_id()  # 누락 방지 — 꼭 추가!
+pitcher_ID = load_pitcher_id()
 
 df = pd.merge(df, batter_ID, on='batter', how='left')
 
@@ -126,7 +126,6 @@ filtered_player_df['opponent_team'] = filtered_player_df.apply(
 
 filtered_player_df['date_str'] = filtered_player_df['game_date'].dt.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
 
-# 중복 제거 및 정렬
 date_options = ['— Select Date —'] + sorted(filtered_player_df['date_str'].unique())
 selected_date_str = st.selectbox('Date', date_options, label_visibility='collapsed')
 
@@ -134,33 +133,32 @@ if selected_date_str == '— Select Date —':
     st.info('ℹ️ 날짜를 선택해주세요.')
     st.stop()
 
-# 선택된 문자열에서 날짜만 추출
 selected_date = pd.to_datetime(selected_date_str.split(' ')[0])
 
-# 날짜별 데이터 필터링
 filtered_df = filtered_player_df[filtered_player_df['game_date'] == selected_date]
 
 if filtered_df.empty:
     st.warning(f"⚠️ {selected_player}의 {selected_date.strftime('%Y-%m-%d')} 날짜 데이터가 없습니다.")
     st.stop()
 
-
-# batter_id 추출 및 Statcast 데이터 불러오기
+# -----------------------------
+# Statcast 데이터 불러오기
+# -----------------------------
 batter_id = filtered_df['batter'].iloc[0]
 statcast_df = statcast_batter(selected_date.strftime('%Y-%m-%d'), selected_date.strftime('%Y-%m-%d'), batter_id)
 
-# 단위 변환 + Batter ID 병합
 statcast_df['release_speed'] = round(statcast_df['release_speed'] * 1.60934, 1)
 statcast_df['launch_speed'] = round(statcast_df['launch_speed'] * 1.60934, 1)
 statcast_df = pd.merge(statcast_df, pitcher_ID, on='pitcher', how='left')
 
 batter_name = statcast_df['player_name'].iloc[0]
-
-# ---- UI 구분선 ----
 opponent_team = selected_date_str.split(' ')[1]
+
 st.header(f"{batter_name} - {selected_date.strftime('%Y-%m-%d')} vs {opponent_team}")
 
-# ---- Pitch Details ----
+# -----------------------------
+# Pitch Details (Table)
+# -----------------------------
 st.subheader("Pitch Details")
 
 filtered_df = filtered_df.rename(columns={
@@ -171,21 +169,18 @@ filtered_df = filtered_df.rename(columns={
 
 st.dataframe(filtered_df[['No', 'Type', 'Out', 'B', 'S', 'Velo(km/h)', 'Spin(rpm)', 'Result', 'Desc']], hide_index=True)
 
-# --- Batting info ---
-st.subheader("Batting info")
+# -----------------------------
+# Description 필터 (Plotly용)
+# -----------------------------
+st.subheader("Description Filter (For Plotly Only)")
 
 description_options = statcast_df['description'].dropna().unique()
 description_options = ['— Select Description —'] + sorted(description_options)
-
 selected_description = st.selectbox('Description', description_options, label_visibility='collapsed')
 
-if selected_description == '— Select Description —':
-    st.info('ℹ️ description 값을 선택해주세요.')
-else:
-    filtered_df = statcast_df[statcast_df['description'] == selected_description]
-    st.dataframe(filtered_df)
-
-# ---- Plotly 시각화 ----
+# -----------------------------
+# Plotly 시각화
+# -----------------------------
 L, R = -0.708333, 0.708333
 Bot, Top = 1.5, 3.5
 
@@ -208,8 +203,14 @@ pitch_styles = {
     'Other': {'color': 'black'}
 }
 
+# description 선택값으로 필터 적용 (선택 안 했으면 전체 사용)
+if selected_description == '— Select Description —':
+    plot_df = statcast_df
+else:
+    plot_df = statcast_df[statcast_df['description'] == selected_description]
+
 for pitch_name, style in pitch_styles.items():
-    pitch_data = filtered_df[filtered_df['pitch_name'] == pitch_name]
+    pitch_data = plot_df[plot_df['pitch_name'] == pitch_name]
     if pitch_data.empty:
         continue
     pitch_data = pitch_data.copy()
@@ -228,7 +229,6 @@ for pitch_name, style in pitch_styles.items():
         )
     )
 
-# 스트라이크존 추가
 scatter_fig.add_shape(type='rect', x0=L, x1=R, y0=Bot, y1=Top, line=dict(color='grey', width=1.5))
 scatter_fig.add_shape(type='path', 
     path=f'M {R-0.1},{0} L {L+0.1},{0} L {L-0.1},{-0.6} L 0,{-1.0} L {R+0.1},{-0.6} Z',
@@ -241,5 +241,4 @@ scatter_fig.update_layout(
     title_x=0.5, title_y=0.98, plot_bgcolor='white'
 )
 
-# 시각화 출력
 st.plotly_chart(scatter_fig, use_container_width=True)
