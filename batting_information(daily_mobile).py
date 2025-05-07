@@ -96,20 +96,13 @@ if filtered_player_df.empty:
     st.warning(f"⚠️ {selected_player} 선수 데이터가 없습니다.")
     st.stop()
 
-# 날짜 선택
 # 상대팀 정보 추가
-# index를 datetime으로 강제 변환 (에러 방지)
-filtered_player_df.index = pd.to_datetime(filtered_player_df.index, errors='coerce')
-
-# datetime으로 변환 못 한 경우 (NaT) → 해당 행 제거
-filtered_player_df = filtered_player_df[filtered_player_df.index.notnull()]
-
 filtered_player_df['opponent_team'] = filtered_player_df.apply(
-    lambda row: row['home_team'] if row['away_team'] == selected_team else row['away_team'], axis=1
+    lambda row: row['away_team'] if row['home_team'] == selected_team else row['home_team'], axis=1
 )
 
 # 날짜 + 상대팀 문자열 생성 (예: 2025-04-15 NYM)
-filtered_player_df['date_str'] = filtered_player_df.index.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
+filtered_player_df['date_str'] = filtered_player_df.index.to_series().dt.strftime('%Y-%m-%d') + ' ' + filtered_player_df['opponent_team']
 
 # 중복 제거 및 정렬
 date_options = ['— Select Date —'] + sorted(filtered_player_df['date_str'].unique())
@@ -144,7 +137,6 @@ batter_name = statcast_df['player_name'].iloc[0]
 opponent_team = selected_date_str.split(' ')[1]
 st.header(f"{batter_name} - {selected_date.strftime('%Y-%m-%d')} vs {opponent_team}")
 
-
 # ---- Pitch Details ----
 st.subheader("Pitch Details")
 
@@ -155,7 +147,6 @@ filtered_df = filtered_df.rename(columns={
 })
 
 st.dataframe(filtered_df[['No', 'Type', 'Out', 'B', 'S', 'Velo(km/h)', 'Spin(rpm)', 'Result', 'Desc']], hide_index=True)
-
 
 # --- Batting info ---
 st.subheader("Batting info")
@@ -170,7 +161,6 @@ if selected_description == '— Select Description —':
 else:
     filtered_df = statcast_df[statcast_df['description'] == selected_description]
     st.dataframe(filtered_df)
-
 
 # ---- Plotly 시각화 ----
 L, R = -0.708333, 0.708333
@@ -219,17 +209,14 @@ for pitch_name, style in pitch_styles.items():
 scatter_fig.add_shape(type='rect', x0=L, x1=R, y0=Bot, y1=Top, line=dict(color='grey', width=1.5))
 scatter_fig.add_shape(type='path', 
     path=f'M {R-0.1},{0} L {L+0.1},{0} L {L-0.1},{-0.6} L 0,{-1.0} L {R+0.1},{-0.6} Z',
-    fillcolor='rgba(0,0,0,0)', line=dict(color='rgba(0,0,0,0)', width=1.5)
-)
+    line=dict(color='grey', width=1.5))
 
 scatter_fig.update_layout(
-    title=f"{batter_name} - {selected_date_str}",
-    xaxis=dict(title="Pitch Location (Horizontal)", range=[L-0.5, R+0.5]),
-    yaxis=dict(title="Pitch Location (Vertical)", range=[Bot-0.5, Top+0.5]),
-    template="plotly_dark", showlegend=True, hoverlabel=dict(namelength=-1), height=650
+    xaxis=dict(range=[L-2.5, R+2.5], showticklabels=False, fixedrange=True),
+    yaxis=dict(range=[Bot-3, Top+2], showticklabels=False, fixedrange=True),
+    width=800, height=500, title=f"{selected_player} vs {opponent_team}",
+    title_x=0.5, title_y=0.98, plot_bgcolor='white'
 )
 
-st.plotly_chart(scatter_fig)
-
-
-
+# 시각화 출력
+st.plotly_chart(scatter_fig, use_container_width=True)
