@@ -237,8 +237,16 @@ scatter_fig.add_shape(type='path',
 scatter_fig.update_layout(
     xaxis=dict(range=[L-2.5, R+2.5], showticklabels=False, fixedrange=True),
     yaxis=dict(range=[Bot-3, Top+2], showticklabels=False, fixedrange=True),
-    width=800, height=500, title=f"{selected_player} vs {opponent_team}",
-    title_x=0.5, title_y=0.98, plot_bgcolor='white'
+    width=550, height=600, showlegend=True,
+    margin=dict(l=5, r=5, t=80, b=5), autosize=True,
+    legend=dict(
+        x=0.02,
+        y=0.98,
+        bgcolor='rgba(255,255,255,0.7)',
+        bordercolor='black',
+        borderwidth=1,
+    ),
+    dragmode=False  # 이 줄을 추가하여 zoom 비활성화
 )
 
 st.plotly_chart(scatter_fig, use_container_width=True)
