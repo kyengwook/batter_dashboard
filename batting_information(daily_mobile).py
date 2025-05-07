@@ -45,7 +45,7 @@ df = load_data_from_drive()
 batter_ID = load_batter_id()
 pitcher_ID = load_pitcher_id()
 
-df = pd.merge(df, batter_ID, on='batter', how='left')
+df = pd.merge(df, pitcher_ID, on='pitcher', how='left')
 
 if df.empty:
     st.error("❌ 데이터셋이 비어있습니다. Google Drive 파일 ID나 파일 내용을 확인하세요.")
