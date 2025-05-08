@@ -14,18 +14,22 @@ st.set_page_config(layout="wide")
 # 데이터 로드 함수
 # -----------------------------
 
-
+import os
 
 @st.cache_data
 def load_data_from_drive():
     url = 'https://drive.google.com/uc?id=1vZB9axWHpzUB5ixNG9Q3JtxTxQsCDMD4'
     output = 'data.csv'
-    gdown.download(url, output, quiet=False)
+
+    if not os.path.exists(output):
+        gdown.download(url, output, quiet=False)
+
     df = pd.read_csv(output)
     df = df[df['game_type'] == 'R']
     df['game_date'] = pd.to_datetime(df['game_date'])
     df = df.set_index('game_date').sort_index()
     return df
+
     
 
 @st.cache_data
