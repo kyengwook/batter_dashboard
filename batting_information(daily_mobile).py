@@ -27,10 +27,8 @@ def load_data_from_drive():
     df = pd.read_csv(output)
     df = df[df['game_type'] == 'R']
     df['game_date'] = pd.to_datetime(df['game_date'])
-    df = df.set_index('game_date').sort_index()
+    df = df.sort_values('game_date').reset_index(drop=True)
     return df
-
-    
 
 @st.cache_data
 def load_batter_id():
