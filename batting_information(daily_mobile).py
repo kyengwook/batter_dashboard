@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import streamlit as st
 import requests
 import io
+import gdown
 from pybaseball import statcast_pitcher, statcast_batter
 
 st.set_page_config(layout="wide")
@@ -12,21 +13,20 @@ st.set_page_config(layout="wide")
 # -----------------------------
 # 데이터 로드 함수
 # -----------------------------
+
+
+
 @st.cache_data
 def load_data_from_drive():
-    file_id = "1vZB9axWHpzUB5ixNG9Q3JtxTxQsCDMD4"
-    download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    response = requests.get(download_url)
-    response.raise_for_status()
-    df = pd.read_csv(io.StringIO(response.content.decode("utf-8")), encoding='utf-8')
-    
-    # 정규시즌만 필터링
+    url = 'https://drive.google.com/uc?id=1vZB9axWHpzUB5ixNG9Q3JtxTxQsCDMD4'
+    output = 'data.csv'
+    gdown.download(url, output, quiet=False)
+    df = pd.read_csv(output)
     df = df[df['game_type'] == 'R']
-    
-    # game_date 컬럼 날짜형 변환 및 정렬 (Index로 안 보냄!)
     df['game_date'] = pd.to_datetime(df['game_date'])
-    df = df.sort_values('game_date').reset_index(drop=True)
+    df = df.set_index('game_date').sort_index()
     return df
+    
 
 @st.cache_data
 def load_batter_id():
