@@ -147,7 +147,7 @@ if filtered_df.empty:
 # Statcast 데이터 불러오기
 # -----------------------------
 batter_id = filtered_df['batter'].iloc[0]
-statcast_df = df[df['batter'] == batter_id]
+statcast_df = df[(df['batter'] == batter_id)&(df['game_date'] == selected_date)]
 
 statcast_df['release_speed'] = round(statcast_df['release_speed'] * 1.60934, 1)
 statcast_df['launch_speed'] = round(statcast_df['launch_speed'] * 1.60934, 1)
