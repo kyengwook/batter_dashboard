@@ -18,7 +18,7 @@ import os
 
 @st.cache_data
 def load_data_from_drive():
-    url = 'https://drive.google.com/uc?id=1vZB9axWHpzUB5ixNG9Q3JtxTxQsCDMD4'
+    url = 'https://drive.google.com/uc?id=1TODiPoK4YK58B6I-dr3OU_vL3ssUM6ok'
     output = 'data.csv'
 
     if not os.path.exists(output):
