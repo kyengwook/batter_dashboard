@@ -20,14 +20,11 @@ import os
 def load_data_from_drive():
     url = 'https://drive.google.com/uc?id=1vZB9axWHpzUB5ixNG9Q3JtxTxQsCDMD4'
     output = 'data.csv'
-
-    if not os.path.exists(output):
-        gdown.download(url, output, quiet=False)
-
+    gdown.download(url, output, quiet=False)
     df = pd.read_csv(output)
     df = df[df['game_type'] == 'R']
     df['game_date'] = pd.to_datetime(df['game_date'])
-    df = df.sort_values('game_date').reset_index(drop=True)
+    df = df.set_index('game_date').sort_index()
     return df
 
 @st.cache_data
