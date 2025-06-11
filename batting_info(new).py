@@ -6,7 +6,7 @@ import streamlit as st
 import requests
 import io
 import gdown
-from pybaseball import statcast_pitcher, statcast_batter
+from pybaseball import statcast_batter
 
 st.set_page_config(layout="wide")
 
