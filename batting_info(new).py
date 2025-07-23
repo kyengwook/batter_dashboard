@@ -32,17 +32,17 @@ def load_batter_id():
     batter_ID = pd.read_excel('Batter_ID(2025).xlsx')
     return batter_ID
 
-@st.cache_data
-def load_pitcher_id():
-    pitcher_ID = pd.read_excel('Pitcher_ID(2025).xlsx')
-    return pitcher_ID
+#@st.cache_data
+#def load_pitcher_id():
+    #pitcher_ID = pd.read_excel('Pitcher_ID(2025).xlsx')
+    #return pitcher_ID
 
 # -----------------------------
 # 데이터 불러오기
 # -----------------------------
 df = load_data_from_drive()
 batter_ID = load_batter_id()
-pitcher_ID = load_pitcher_id()
+#pitcher_ID = load_pitcher_id()
 
 df = pd.merge(df, batter_ID, on='batter', how='left')
 
@@ -148,7 +148,7 @@ statcast_df = df[(df['batter'] == batter_id)&(df['game_date'] == selected_date)]
 
 statcast_df['release_speed'] = round(statcast_df['release_speed'] * 1.60934, 1)
 statcast_df['launch_speed'] = round(statcast_df['launch_speed'] * 1.60934, 1)
-statcast_df = pd.merge(statcast_df, pitcher_ID, on='pitcher', how='left')
+#statcast_df = pd.merge(statcast_df, pitcher_ID, on='pitcher', how='left')
 
 batter_name = statcast_df['batter_name'].iloc[0]
 opponent_team = selected_date_str.split(' ')[1]
